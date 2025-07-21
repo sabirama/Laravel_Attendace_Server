@@ -1,0 +1,9 @@
+header {
+    padding: .25rem 1rem;
+    color: blue;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+}
