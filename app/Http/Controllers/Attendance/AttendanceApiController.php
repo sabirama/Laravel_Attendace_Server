@@ -41,12 +41,32 @@ class AttendanceApiController extends Controller
             return response()->json(['error' => 'Student not found'], 404);
         }
 
-        AttendanceLog::create([
-            'uid' => $uid,
-        ]);
+        $today = now()->format('Y-m-d');
+
+        // ✅ Fetch today's logs for this UID
+        $logsToday = AttendanceLog::where('uid', $uid)
+            ->whereDate('created_at', $today)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $logCount = $logsToday->count();
+
+        if ($logCount >= 2) {
+            // ✅ Update the latest (2nd) log instead of adding a new one
+            $lastLog = $logsToday->last();
+            $lastLog->update(['created_at' => now()]);
+        } else {
+            // ✅ Create new log
+            AttendanceLog::create([
+                'uid' => $uid,
+                'created_at' => now()
+            ]);
+        }
 
         return response()->json([
             'student' => $student,
+            'log_count' => $logCount >= 2 ? 2 : $logCount + 1,
+            'message' => $logCount >= 2 ? 'Last log updated' : 'New log created'
         ]);
     }
 

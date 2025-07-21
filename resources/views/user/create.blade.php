@@ -12,8 +12,8 @@
 
     <div class="navbar">
         <h1>Add Students</h1>
-        <a href="{{ route('user') }}">
-            <button>Back to Students List</button>
+        <a href="{{ route('logout') }}">
+            <button>Logout</button>
         </a>
     </div>
 

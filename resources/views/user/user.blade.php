@@ -12,8 +12,8 @@
 
     <div class="navbar">
         <h1>Students Management</h1>
-        <a href="{{ route('user.create') }}">
-            <button>Add Students</button>
+        <a href="{{ route('logout') }}">
+            <button>Logout</button>
         </a>
     </div>
 

@@ -12,9 +12,12 @@
 
     <div class="navbar">
         <h1>Daily Attendance</h1>
-        <a href="{{ route('user') }}">
-            <button>Back to Students List</button>
-        </a>
+        <div>
+            <button onclick="downloadCSV()">Download Current View as CSV</button>
+            <a href="{{ route('logout') }}" style="margin-right: 10px;">
+                <button>Logout</button>
+            </a>
+        </div>
     </div>
 
     <div class="container">
@@ -23,8 +26,8 @@
                 <li><a href="{{ route('dashboard') }}">Dashboard</a></li>
                 <li><a href="{{ route('user') }}">Students</a></li>
                 <li><a href="{{ route('user.create') }}">Add Students</a></li>
-                <li><a href="{{ route('attendance.index') }}">Daily Attendance</a></li>
-                <li><a href="{{ route('api_tokens.index') }}" class="active">Log Keys</a></li>
+                <li><a href="{{ route('attendance.index') }}" class="active">Daily Attendance</a></li>
+                <li><a href="{{ route('api_tokens.index') }}">Log Keys</a></li>
             </ul>
         </aside>
 
@@ -34,33 +37,46 @@
             <form method="GET" action="{{ route('attendance.index') }}" style="margin-bottom: 1rem;">
                 <label for="date">Select date:</label>
                 <input type="date" id="date" name="date" value="{{ $date }}" onchange="this.form.submit()" />
+
+                <label for="group" style="margin-left: 1rem;">Filter by group:</label>
+                <select name="group" id="group" onchange="this.form.submit()">
+                    <option value="">All Groups</option>
+                    @php
+                        $groupOptions = $users->pluck('group')->filter()->unique()->sort();
+                    @endphp
+                    @foreach ($groupOptions as $groupName)
+                        <option value="{{ $groupName }}" {{ $groupName == ($group ?? '') ? 'selected' : '' }}>
+                            {{ ucfirst($groupName) }}
+                        </option>
+                    @endforeach
+                </select>
             </form>
 
             <div class="table-container" style="overflow-x: auto;">
-                <table>
+                <table id="attendanceTable">
                     <thead>
                         <tr>
                             <th>UID</th>
                             <th>Name</th>
                             <th>Contact</th>
                             <th>Group</th>
+                            <th>Status</th>
                             <th>Time</th>
                         </tr>
                     </thead>
                     <tbody>
                         @php
-                            // Get unique attendance records by UID (showing first occurrence)
-                            $uniqueLogs = $attendanceLogs->unique('uid');
-                            // Alternatively, to show last occurrence:
-                            // $uniqueLogs = $attendanceLogs->sortByDesc('created_at')->unique('uid');
+                            $groupedLogs = $attendanceLogs->groupBy('uid');
                         @endphp
 
-                        @forelse($uniqueLogs as $log)
+                        @forelse($groupedLogs as $uid => $logs)
                             @php
-                                $user = $users->get($log->uid);
+                                $user = $users->get($uid);
+                                $firstLog = $logs->sortBy('created_at')->first();
+                                $lastLog = $logs->sortByDesc('created_at')->first();
                             @endphp
                             <tr>
-                                <td>{{ $log->uid }}</td>
+                                <td>{{ $uid }}</td>
                                 <td>
                                     @if($user)
                                         <a href="{{ route('user') }}?group={{ $user->group }}">{{ $user->name }}</a>
@@ -70,11 +86,28 @@
                                 </td>
                                 <td>{{ $user->contact ?? '-' }}</td>
                                 <td>{{ ucfirst($user->group ?? '-') }}</td>
-                                <td>{{ \Carbon\Carbon::parse($log->created_at)->format('H:i:s') }}</td>
+                                <td>IN</td>
+                                <td>{{ \Carbon\Carbon::parse($firstLog->created_at)->format('H:i:s') }}</td>
                             </tr>
+                            @if($firstLog->id != $lastLog->id)
+                                <tr>
+                                    <td>{{ $uid }}</td>
+                                    <td>
+                                        @if($user)
+                                            <a href="{{ route('user') }}?group={{ $user->group }}">{{ $user->name }}</a>
+                                        @else
+                                            Unknown User
+                                        @endif
+                                    </td>
+                                    <td>{{ $user->contact ?? '-' }}</td>
+                                    <td>{{ ucfirst($user->group ?? '-') }}</td>
+                                    <td>OUT</td>
+                                    <td>{{ \Carbon\Carbon::parse($lastLog->created_at)->format('H:i:s') }}</td>
+                                </tr>
+                            @endif
                         @empty
                             <tr>
-                                <td colspan="5" style="text-align:center;">No attendance records for this date.</td>
+                                <td colspan="6" style="text-align:center;">No attendance records for this date.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -82,6 +115,38 @@
             </div>
         </main>
     </div>
+
+    <script>
+        function downloadCSV() {
+            const rows = document.querySelectorAll('#attendanceTable tr');
+            let csvContent = "data:text/csv;charset=utf-8,";
+
+            const headers = [];
+            document.querySelectorAll('#attendanceTable th').forEach(header => {
+                headers.push(header.innerText);
+            });
+            csvContent += headers.join(",") + "\n";
+
+            rows.forEach(row => {
+                const cols = row.querySelectorAll('td');
+                if (cols.length > 0) {
+                    let rowData = [];
+                    cols.forEach(col => {
+                        rowData.push(col.innerText);
+                    });
+                    csvContent += rowData.join(",") + "\n";
+                }
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "attendance_{{ \Carbon\Carbon::parse($date)->format('Y-m-d') }}.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
 
 </body>
 

@@ -16,4 +16,5 @@ class ApiToken extends Model
             'token' => Str::random(64),
         ]);
     }
+
 }

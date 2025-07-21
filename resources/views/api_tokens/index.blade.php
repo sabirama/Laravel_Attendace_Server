@@ -12,7 +12,9 @@
 
     <div class="navbar">
         <h1>API Keys Management</h1>
-        <!-- You can add a button here if you want navigation or extra actions -->
+        <a href="{{ route('logout') }}" style="margin-right: 10px;">
+            <button>Logout</button>
+        </a>
     </div>
 
     <div class="container">
@@ -50,7 +52,7 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Token (hidden after creation)</th>
+                                <th>Token</th>
                                 <th>Created At</th>
                                 <th>Actions</th>
                             </tr>

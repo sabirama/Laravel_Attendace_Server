@@ -20,7 +20,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::post('/user/mass-store', [UserController::class, 'massStore'])->name('user.mass-store');
 
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
-
+    Route::get('/attendance/export', [AttendanceController::class, 'export'])->name('attendance.export');
 
     Route::get('/api-keys', [ApiTokenController::class, 'index'])->name('api_tokens.index');
     Route::post('/api-keys', [ApiTokenController::class, 'store'])->name('api_tokens.store');
