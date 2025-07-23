@@ -11,41 +11,41 @@ use Carbon\Carbon;
 class AttendanceController extends Controller
 {
     public function index(Request $request)
-{
-    $date = $request->input('date', date('Y-m-d'));
-    $group = $request->input('group'); // get selected group
+    {
+        $date = $request->input('date', date('Y-m-d'));
+        $group = $request->input('group'); // get selected group
 
-    // Get logs for the selected date
-    $attendanceLogs = DB::table('attendance_logs')
-        ->whereDate('created_at', $date)
-        ->orderBy('created_at', 'asc')
-        ->get();
+        // Get logs for the selected date
+        $attendanceLogs = DB::table('attendance_logs')
+            ->whereDate('created_at', $date)
+            ->orderBy('created_at', 'asc')
+            ->get();
 
-    // Get unique UIDs from logs
-    $uids = $attendanceLogs->pluck('uid')->unique();
+        // Get unique UIDs from logs
+        $uids = $attendanceLogs->pluck('uid')->unique();
 
-    // Fetch users keyed by UID
-    $users = DB::table('users')
-        ->whereIn('uid', $uids)
-        ->get()
-        ->keyBy('uid');
+        // Fetch users keyed by UID
+        $users = DB::table('users')
+            ->whereIn('uid', $uids)
+            ->get()
+            ->keyBy('uid');
 
-    // If group is selected, filter both users and logs by group
-    if ($group) {
-        // Only keep users matching selected group
-        $users = $users->filter(fn($user) => $user->group === $group);
+        // If group is selected, filter both users and logs by group
+        if ($group) {
+            // Only keep users matching selected group
+            $users = $users->filter(fn($user) => $user->group === $group);
 
-        // Filter logs to only those UIDs in the filtered users
-        $attendanceLogs = $attendanceLogs->filter(fn($log) => $users->has($log->uid));
+            // Filter logs to only those UIDs in the filtered users
+            $attendanceLogs = $attendanceLogs->filter(fn($log) => $users->has($log->uid));
+        }
+
+        return view('attendance.index', [
+            'attendanceLogs' => $attendanceLogs,
+            'users' => $users,
+            'date' => $date,
+            'group' => $group,
+        ]);
     }
-
-    return view('attendance.index', [
-        'attendanceLogs' => $attendanceLogs,
-        'users' => $users,
-        'date' => $date,
-        'group' => $group,
-    ]);
-}
 
 
     public function export(Request $request)
