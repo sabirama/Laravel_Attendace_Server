@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 echo "Running composer"
-composer install --no-dev --optimize-autoloader && php artisan key:generate && php artisan config:cache
+composer install --no-dev --optimize-autoloader
 echo "Caching config..."
 php artisan config:cache
 
